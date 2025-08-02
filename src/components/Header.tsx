@@ -52,6 +52,39 @@ const Header: React.FC = () => {
             </h2>
           </div>
 
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/'
+                  ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/patients"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/patients' || location.pathname.startsWith('/patient/') || location.pathname === '/add-patient'
+                  ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Patients
+            </Link>
+            <Link
+              to="/schedule"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/schedule' || location.pathname.startsWith('/transfusion-cycle/')
+                  ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Transfusion Schedules
+            </Link>
+          </nav>
+
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleTheme}
