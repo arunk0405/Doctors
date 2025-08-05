@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Search, UserPlus, AlertTriangle, Clock, CalendarDays, Activity, Plus, BarChart3 } from 'lucide-react';
+import { Users, Calendar, Search, AlertTriangle, Clock, CalendarDays, Activity, Plus, BarChart3, Pill } from 'lucide-react';
 import { mockPatients, mockScheduledTransfusions } from '../data/mockData';
 
 const Dashboard: React.FC = () => {
@@ -11,6 +11,7 @@ const Dashboard: React.FC = () => {
   const scheduledTransfusions = mockScheduledTransfusions.length;
   const overdueTransfusions = mockScheduledTransfusions.filter(t => t.status === 'Overdue').length;
   const highRiskPatients = mockPatients.filter(p => p.riskLevel === 'High').length;
+  const activeChelationTherapy = 0; // Since mockPatients don't have chelationTherapy property yet
 
   const handleSearch = () => {
     if (searchId.trim()) {
@@ -177,14 +178,14 @@ const Dashboard: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3 mb-2">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-              <AlertTriangle className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <Pill className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              High Risk
+              Iron Chelation Active
             </h3>
           </div>
           <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {highRiskPatients}
+            {activeChelationTherapy}
           </p>
         </div>
       </div>

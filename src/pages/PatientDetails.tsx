@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
-  User, Phone, MapPin, AlertTriangle, Calendar, FileText, 
+  User, Phone, MapPin, AlertTriangle, FileText, 
   Activity, Plus, Edit3, Clock, Stethoscope, TestTube,
-  Heart, ChevronRight, Save, X
+  Heart, ChevronRight, Save, X, StopCircle, Pill
 } from 'lucide-react';
-import { mockPatients } from '../data/mockData';
+import { mockPatients, mockScheduledTransfusions } from '../data/mockData';
 import { format } from 'date-fns';
 
 const PatientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const patient = mockPatients.find(p => p.id === id);
+  const patient = mockPatients.find((p: any) => p.id === id);
+  
+  // Check if patient has an active transfusion plan
+  const hasActiveTransfusionPlan = patient ? 
+    mockScheduledTransfusions.some(schedule => 
+      schedule.patientId === patient.id && 
+      (schedule.status === 'Scheduled' || schedule.status === 'Overdue')
+    ) : false;
+  
   const [isEditingInterval, setIsEditingInterval] = useState(false);
   const [newInterval, setNewInterval] = useState(patient?.transfusionInterval || 21);
   const [notes, setNotes] = useState('');
   const [showAIPrediction, setShowAIPrediction] = useState(false);
   const [aiPredictedDays, setAiPredictedDays] = useState(18);
+  const [showStopCycleModal, setShowStopCycleModal] = useState(false);
+  const [showChelationModal, setShowChelationModal] = useState(false);
+  const [chelationForm, setChelationForm] = useState({
+    days: '',
+    timing: '',
+    dose: ''
+  });
 
   if (!patient) {
     return (
@@ -52,6 +67,35 @@ const PatientDetails: React.FC = () => {
     setShowAIPrediction(true);
   };
 
+  const handleStopCycle = () => {
+    if (patient) {
+      // Simulate updating patient - in real app this would call an API
+      console.log('Stopping transfusion cycle for patient:', patient.id);
+      setShowStopCycleModal(false);
+      // You could show a success message here
+    }
+  };
+
+  const handleCreateChelation = () => {
+    if (patient) {
+      const chelationSchedule = {
+        id: Date.now().toString(),
+        patientId: patient.id,
+        days: parseInt(chelationForm.days),
+        timing: chelationForm.timing,
+        dose: chelationForm.dose,
+        startDate: new Date().toISOString().split('T')[0],
+        status: 'active' as const
+      };
+
+      // Simulate updating patient - in real app this would call an API
+      console.log('Creating chelation schedule:', chelationSchedule);
+      setShowChelationModal(false);
+      setChelationForm({ days: '', timing: '', dose: '' });
+      // You could show a success message here
+    }
+  };
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'High':
@@ -80,7 +124,7 @@ const PatientDetails: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
               <span className="text-red-600 dark:text-red-400 text-xl font-bold">
-                {patient.name.split(' ').map(n => n[0]).join('')}
+                {patient.name.split(' ').map((n: string) => n[0]).join('')}
               </span>
             </div>
             <div>
@@ -181,7 +225,7 @@ const PatientDetails: React.FC = () => {
                   Medical History
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {patient.medicalHistory.map((condition, index) => (
+                  {patient.medicalHistory.map((condition: string, index: number) => (
                     <span
                       key={index}
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
@@ -239,7 +283,7 @@ const PatientDetails: React.FC = () => {
               Transfusion History
             </h3>
             <div className="space-y-4">
-              {patient.transfusionHistory.map((record) => (
+              {patient.transfusionHistory.map((record: any) => (
                 <div key={record.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -423,6 +467,31 @@ const PatientDetails: React.FC = () => {
             )}
           </div>
 
+          {/* Patient Management Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Patient Management
+            </h3>
+            <div className="space-y-3">
+              {hasActiveTransfusionPlan && (
+                <button
+                  onClick={() => setShowStopCycleModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  <StopCircle className="h-4 w-4" />
+                  <span>Stop Current Transfusion Cycle</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowChelationModal(true)}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                <Pill className="h-4 w-4" />
+                <span>Create Iron Chelation Schedule</span>
+              </button>
+            </div>
+          </div>
+
           {/* Notes */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -435,6 +504,102 @@ const PatientDetails: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Stop Cycle Modal */}
+      {showStopCycleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
+              Stop Transfusion Cycle
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to stop the current transfusion cycle? This action will mark the cycle as completed and update the patient's status.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleStopCycle}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Yes, Stop Cycle
+              </button>
+              <button
+                onClick={() => setShowStopCycleModal(false)}
+                className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Iron Chelation Modal */}
+      {showChelationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <Pill className="h-5 w-5 mr-2 text-blue-600" />
+              Create Iron Chelation Schedule
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Number of Days
+                </label>
+                <input
+                  type="number"
+                  value={chelationForm.days}
+                  onChange={(e) => setChelationForm({...chelationForm, days: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., 30"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Daily Timing
+                </label>
+                <input
+                  type="time"
+                  value={chelationForm.timing}
+                  onChange={(e) => setChelationForm({...chelationForm, timing: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Dose
+                </label>
+                <input
+                  type="text"
+                  value={chelationForm.dose}
+                  onChange={(e) => setChelationForm({...chelationForm, dose: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., 500mg or 2 tablets"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-4 mt-6">
+              <button
+                onClick={handleCreateChelation}
+                disabled={!chelationForm.days || !chelationForm.timing || !chelationForm.dose}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Create Schedule
+              </button>
+              <button
+                onClick={() => {
+                  setShowChelationModal(false);
+                  setChelationForm({ days: '', timing: '', dose: '' });
+                }}
+                className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
